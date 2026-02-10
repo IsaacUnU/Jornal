@@ -15,7 +15,7 @@ import {
     parseISO
 } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useI18n } from '../../lib/i18n';
 import { Link } from 'react-router-dom';
@@ -31,7 +31,7 @@ export default function TradeCalendar() {
             const start = startOfMonth(currentMonth);
             const end = endOfMonth(currentMonth);
 
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('trades')
                 .select('*')
                 .gte('date', start.toISOString())
@@ -40,6 +40,7 @@ export default function TradeCalendar() {
             if (data) setTrades(data);
             setLoading(false);
         }
+        setLoading(true);
         fetchTrades();
     }, [currentMonth]);
 
@@ -162,7 +163,14 @@ export default function TradeCalendar() {
             );
             days = [];
         }
-        return <div className="rounded-[32px] overflow-hidden border border-[#222222] shadow-2xl">{rows}</div>;
+        return <div className="rounded-[32px] overflow-hidden border border-[#222222] shadow-2xl relative">
+            {loading && (
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-10 flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                </div>
+            )}
+            {rows}
+        </div>;
     };
 
     return (
