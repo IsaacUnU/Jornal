@@ -70,7 +70,13 @@ const translations = {
         wed: 'Wed',
         thu: 'Thu',
         fri: 'Fri',
-        sat: 'Sat'
+        sat: 'Sat',
+        aiAnalysis: 'AI Trade Analysis',
+        analyzeBtn: 'Analyze Performance',
+        analyzing: 'Analyzing Trade...',
+        aiFeedbackTitle: 'AI Trading Coach Insights',
+        aiFeedbackPlaceholder: 'Click the button above to get personalized AI feedback on this trade.',
+        aiError: 'Could not generate analysis. Please check your API key.'
     },
     es: {
         dashboard: 'Panel',
@@ -141,7 +147,13 @@ const translations = {
         wed: 'Mié',
         thu: 'Jue',
         fri: 'Vie',
-        sat: 'Sáb'
+        sat: 'Sáb',
+        aiAnalysis: 'Análisis IA del Trade',
+        analyzeBtn: 'Analizar Rendimiento',
+        analyzing: 'Analizando Trade...',
+        aiFeedbackTitle: 'Insights del Coach de Trading IA',
+        aiFeedbackPlaceholder: 'Haz clic en el botón para obtener feedback personalizado de la IA sobre este trade.',
+        aiError: 'No se pudo generar el análisis. Revisa tu clave de API.'
     }
 };
 

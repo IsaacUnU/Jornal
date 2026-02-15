@@ -2,19 +2,22 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { Trade, Screenshot } from '../../types';
-import { ArrowLeft, Trash2, Edit2, TrendingUp, TrendingDown, Clock, Map, Activity, Brain, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit2, Clock, Map, Activity, Brain, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../../lib/utils';
 import { useI18n } from '../../lib/i18n';
+import { analyzeTrade } from '../../services/ai';
+import ReactMarkdown from 'react-markdown';
 
 export default function TradeDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [trade, setTrade] = useState<Trade | null>(null);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [analyzing, setAnalyzing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchTradeData = async () => {
@@ -81,8 +84,28 @@ export default function TradeDetail() {
         }
     };
 
-    if (loading) return <div className="text-white">Loading...</div>;
-    if (!trade) return <div className="text-white">Trade not found.</div>;
+    const handleAIAnalysis = async () => {
+        if (!trade) return;
+        setAnalyzing(true);
+        try {
+            const analysis = await analyzeTrade(trade, lang as 'en' | 'es');
+            const { error } = await supabase
+                .from('trades')
+                .update({ ai_analysis: analysis })
+                .eq('id', trade.id);
+
+            if (error) throw error;
+            setTrade({ ...trade, ai_analysis: analysis });
+        } catch (error: any) {
+            console.error("AI Analysis Error Detail:", error);
+            alert(`${t.aiError}\n\nDetalles: ${error.message || 'Error desconocido'}`);
+        } finally {
+            setAnalyzing(false);
+        }
+    };
+
+    if (loading) return <div className="text-white p-10">Loading...</div>;
+    if (!trade) return <div className="text-white p-10">Trade not found.</div>;
 
     return (
         <div className="space-y-10">
@@ -146,6 +169,55 @@ export default function TradeDetail() {
                         </div>
                     </section>
 
+                    <section className="bg-gradient-to-br from-[#111111] to-[#0d0d0d] border border-blue-500/10 rounded-3xl p-8 shadow-[0_0_50px_rgba(59,130,246,0.03)] relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-8 text-blue-500/10 group-hover:text-blue-500/20 transition-colors">
+                            <Sparkles className="w-16 h-16" />
+                        </div>
+
+                        <div className="flex items-center justify-between mb-8 relative z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
+                                    <Brain className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold tracking-tight">{t.aiAnalysis}</h3>
+                            </div>
+                            <button
+                                onClick={handleAIAnalysis}
+                                disabled={analyzing}
+                                className={cn(
+                                    "flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition-all shadow-[0_0_20px_rgba(59,130,246,0.2)] disabled:opacity-50 disabled:cursor-not-allowed",
+                                    analyzing && "px-4"
+                                )}
+                            >
+                                {analyzing ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                        <span>{t.analyzing}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-2" />
+                                        <span>{trade.ai_analysis ? t.edit : t.analyzeBtn}</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="bg-[#0a0a0a]/50 backdrop-blur-sm rounded-2xl p-8 border border-[#222222] min-h-[150px] relative z-10">
+                            {trade.ai_analysis ? (
+                                <div className="prose prose-invert max-w-none prose-sm prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight prose-p:text-gray-400 prose-p:leading-relaxed prose-strong:text-blue-400 prose-ul:text-gray-400">
+                                    <ReactMarkdown>{trade.ai_analysis}</ReactMarkdown>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-6 text-center">
+                                    <p className="text-gray-500 font-medium italic max-w-md mx-auto leading-relaxed">
+                                        {t.aiFeedbackPlaceholder}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
                     <section className="bg-[#111111] border border-[#222222] rounded-3xl p-6 md:p-10">
                         <h3 className="text-sm font-bold uppercase text-gray-500 tracking-widest mb-6">Execution Screenshots</h3>
                         <input type="file" hidden ref={fileInputRef} onChange={handleFileUpload} accept="image/*" />
@@ -197,7 +269,7 @@ export default function TradeDetail() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {[...Array(5)].map((_, i) => (
-                                    <div key={i} className={cn("flex-1 h-3 rounded-full", i < trade.execution_quality ? "bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]" : "bg-[#222222]")} />
+                                    <div key={i} className={cn("flex-1 h-3 rounded-full", i < trade.execution_quality ? "bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.03)]" : "bg-[#222222]")} />
                                 ))}
                             </div>
                             <p className="text-xs text-blue-400/60 mt-3 font-medium">A quality score of {trade.execution_quality}/5 reflects how well you followed your plan.</p>

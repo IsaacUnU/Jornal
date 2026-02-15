@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.trades (
     execution_quality INT NOT NULL CHECK (execution_quality BETWEEN 1 AND 5),
     emotional_state TEXT NOT NULL, -- "Calm", "Anxious", "Fearful", "Greedy", etc.
     notes TEXT,
+    ai_analysis TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 

@@ -19,6 +19,7 @@ export interface Trade {
     execution_quality: number;
     emotional_state: string;
     notes?: string;
+    ai_analysis?: string;
     created_at: string;
 }
 
